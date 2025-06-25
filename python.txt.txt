@@ -1,0 +1,61 @@
+import hashlib
+import json
+from datetime import datetime
+
+class SecurePaymentSystem:
+    def __init__(self):
+        self.transactions = []
+        self.merchant_key = "SECRET_MERCHANT_KEY"  # In practice, use environment variables
+
+    def encrypt_card_data(self, card_number):
+        """Hash sensitive card data using SHA-256 (never store raw card numbers)."""
+        return hashlib.sha256((card_number + self.merchant_key).encode()).hexdigest()
+
+    def process_payment(self, card_number, amount, cvv, expiry_date):
+        """Simulate a secure payment transaction."""
+        try:
+            # Input validation
+            if not (len(card_number) == 16 and card_number.isdigit()):
+                raise ValueError("Invalid card number")
+            if not (len(cvv) == 3 and cvv.isdigit()):
+                raise ValueError("Invalid CVV")
+            if not (len(expiry_date) == 5 and expiry_date[2] == '/'):
+                raise ValueError("Expiry date format: MM/YY")
+
+            # Encrypt card data
+            encrypted_card = self.encrypt_card_data(card_number)
+
+            # Log transaction (without storing raw card details)
+            transaction = {
+                "timestamp": datetime.now().isoformat(),
+                "encrypted_card": encrypted_card,
+                "amount": amount,
+                "status": "APPROVED"
+            }
+            self.transactions.append(transaction)
+
+            return {"success": True, "transaction_id": encrypted_card[:8]}
+        
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def get_transaction_log(self):
+        """Return transaction history (for auditing)."""
+        return json.dumps(self.transactions, indent=2)
+
+# Example Usage
+if __name__ == "__main__":
+    payment_system = SecurePaymentSystem()
+
+    # Simulate a payment
+    result = payment_system.process_payment(
+        card_number="4111111111111111",
+        amount=100.00,
+        cvv="123",
+        expiry_date="12/25"
+    )
+    print("Payment Result:", result)
+
+    # Display transaction log
+    print("\nTransaction Log:")
+    print(payment_system.get_transaction_log())
